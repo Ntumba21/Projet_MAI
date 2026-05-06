@@ -4,7 +4,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from mai import chat_avec_mai
+from recherche_pros import rechercher_professionnels, formater_pour_chat
 
+
+    
+    
 app = FastAPI()
 
 # Autoriser les connexions depuis n'importe quelle origine
@@ -27,12 +31,24 @@ class RequeteChat(BaseModel):
 def accueil():
     return {"message": "MAI est en ligne 👋"}
 
-
 @app.post("/chat")
 def chat(requete: RequeteChat):
-    """
-    Point d'entrée principal.
-    Reçoit la conversation, retourne la réponse de MAI.
-    """
     resultat = chat_avec_mai(requete.messages, requete.age)
     return resultat
+
+class RequeteRecherche(BaseModel):
+    ville: str
+    type_pro: str = "psychologue"
+
+@app.post("/recherche")
+def recherche(requete: RequeteRecherche):
+    """
+    Recherche des professionnels de santé mentale dans une ville.
+    """
+    resultats = rechercher_professionnels(requete.ville, requete.type_pro)
+    texte = formater_pour_chat(resultats, requete.ville, requete.type_pro)
+    return {
+        "resultats": resultats,
+        "texte": texte
+    }
+    
